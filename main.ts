@@ -23,6 +23,7 @@ import {
   SelectionSnapshot,
 } from "./src/storage/types";
 import { AnnotationPopover } from "./src/views/annotationPopover";
+import { detectLocale, getNoteTitleLabel, t } from "./src/i18n/helpers";
 import { ANNOTATION_SIDEBAR_VIEW, AnnotationSidebarView } from "./src/views/sidebarView";
 
 interface CommentModalValue {
@@ -30,11 +31,11 @@ interface CommentModalValue {
   content: string;
 }
 
-const NOTE_TITLE_OPTIONS = [
-  { value: "Insight", label: "💡 Insight" },
-  { value: "Question", label: "❓ Question" },
-  { value: "Reminder", label: "🔔 Reminder" },
-] as const;
+const NOTE_TITLE_VALUES = ["Insight", "Question", "Reminder"] as const;
+
+function getNoteTitleOptions(): { value: string; label: string }[] {
+  return NOTE_TITLE_VALUES.map((value) => ({ value, label: getNoteTitleLabel(value) }));
+}
 
 const AXL_LIGHT_ICON = `
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
@@ -61,6 +62,13 @@ export default class OverlayAnnotationsPlugin extends Plugin {
 
   async onload(): Promise<void> {
     addIcon("axl-light-icon", AXL_LIGHT_ICON);
+    detectLocale(this.app as unknown as { getLanguage?: () => string });
+
+    // Normalize icon button sizing across platforms (macOS vs Windows SVG rendering)
+    document.head.insertAdjacentHTML(
+      "beforeend",
+      "<style>.axl-icon-btn svg,.axl-icon-button svg{width:18px!important;height:18px!important;min-width:18px!important;min-height:18px!important;flex-shrink:0}</style>",
+    );
     await this.loadSettings();
     this.store = new AnnotationStore(this.app);
     await this.store.initialize();
@@ -146,7 +154,7 @@ export default class OverlayAnnotationsPlugin extends Plugin {
   }
 
   private registerRibbonIcon(): void {
-    const icon = this.addRibbonIcon("highlighter", "Open Axl Light", () => {
+    const icon = this.addRibbonIcon("highlighter", t("ribbon.tooltip"), () => {
       void this.activateSidebar();
     });
     icon.addClass("axl-ribbon-icon");
@@ -155,21 +163,21 @@ export default class OverlayAnnotationsPlugin extends Plugin {
   private registerCommands(): void {
     this.addCommand({
       id: "highlight-selection",
-      name: "Highlight selected text",
+      name: t("command.highlightSelection"),
       hotkeys: [{ modifiers: ["Mod", "Shift"], key: "h" }],
       callback: () => this.createHighlight(this.settings.defaultHighlightColor),
     });
 
     this.addCommand({
       id: "add-sticky-note",
-      name: "Add sticky note to selection",
+      name: t("command.addStickyNote"),
       hotkeys: [{ modifiers: ["Mod", "Alt"], key: "m" }],
       callback: () => this.createComment(),
     });
 
     this.addCommand({
       id: "toggle-sticky-notes",
-      name: "Toggle annotation popovers",
+      name: t("command.toggleAnnotationPopovers"),
       hotkeys: [{ modifiers: ["Mod", "Shift"], key: "n" }],
       callback: async () => {
         this.settings.stickyNotesVisible = !this.settings.stickyNotesVisible;
@@ -180,7 +188,7 @@ export default class OverlayAnnotationsPlugin extends Plugin {
 
     this.addCommand({
       id: "open-annotation-sidebar",
-      name: "Open annotation overview",
+      name: t("command.openAnnotationOverview"),
       callback: () => this.activateSidebar(),
     });
   }
@@ -253,7 +261,7 @@ export default class OverlayAnnotationsPlugin extends Plugin {
     const snapshot = await this.resolveSelection();
 
     if (!snapshot) {
-      new Notice("Select text first.");
+      new Notice(t("notice.selectTextFirst"));
       return;
     }
 
@@ -292,7 +300,7 @@ export default class OverlayAnnotationsPlugin extends Plugin {
 
     const snapshot = await this.resolveSelection();
     if (!snapshot) {
-      new Notice("Select text first.");
+      new Notice(t("notice.selectTextFirst"));
       return;
     }
 
@@ -425,7 +433,7 @@ export default class OverlayAnnotationsPlugin extends Plugin {
     const text = window.getSelection()?.toString() || this.activeEditor()?.editor.getSelection() || "";
     if (text) {
       navigator.clipboard.writeText(text);
-      new Notice("Copied selection");
+      new Notice(t("notice.copiedSelection"));
     }
   }
 
@@ -725,27 +733,27 @@ class CommentModal extends Modal {
 
   onOpen(): void {
     this.contentEl.empty();
-    this.contentEl.createEl("h2", { text: "Sticky note" });
+    this.contentEl.createEl("h2", { text: t("modal.stickyNoteTitle") });
 
     const titleRow = this.contentEl.createDiv({ cls: "axl-modal-row" });
-    titleRow.createEl("label", { cls: "axl-modal-label", text: "Type" });
+    titleRow.createEl("label", { cls: "axl-modal-label", text: t("modal.typeLabel") });
     const title = titleRow.createEl("select", { cls: "axl-modal-select" });
-    for (const option of NOTE_TITLE_OPTIONS) {
+    for (const option of getNoteTitleOptions()) {
       title.createEl("option", { text: option.label, attr: { value: option.value } });
     }
     title.value = normalizedNoteTitle(this.initialTitle);
 
     const contentRow = this.contentEl.createDiv({ cls: "axl-modal-row" });
-    contentRow.createEl("label", { cls: "axl-modal-label", text: "Note" });
+    contentRow.createEl("label", { cls: "axl-modal-label", text: t("modal.noteLabel") });
     const input = contentRow.createEl("textarea", {
       cls: "axl-modal-textarea",
-      attr: { rows: "8", placeholder: "Write your thoughts..." },
+      attr: { rows: "8", placeholder: t("modal.notePlaceholder") },
     });
     input.value = this.initialContent;
 
     const actions = this.contentEl.createDiv({ cls: "axl-modal-actions" });
-    const cancel = actions.createEl("button", { text: "Cancel", cls: "axl-modal-cancel", attr: { type: "button" } });
-    const save = actions.createEl("button", { text: "Save", cls: "axl-modal-save", attr: { type: "button" } });
+    const cancel = actions.createEl("button", { text: t("modal.cancel"), cls: "axl-modal-cancel", attr: { type: "button" } });
+    const save = actions.createEl("button", { text: t("modal.save"), cls: "axl-modal-save", attr: { type: "button" } });
     cancel.addEventListener("click", () => {
       this.value = null;
       this.close();
@@ -765,5 +773,5 @@ class CommentModal extends Modal {
 }
 
 function normalizedNoteTitle(value: string): string {
-  return NOTE_TITLE_OPTIONS.some((option) => option.value === value) ? value : NOTE_TITLE_OPTIONS[0].value;
+  return NOTE_TITLE_VALUES.includes(value as (typeof NOTE_TITLE_VALUES)[number]) ? value : NOTE_TITLE_VALUES[0];
 }

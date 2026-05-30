@@ -7,6 +7,7 @@
 
 import { App, Component, MarkdownRenderer, setIcon } from "obsidian";
 
+import { getColorLabel, t } from "../i18n/helpers";
 import { AnnotationColor, CommentAnnotation, HighlightAnnotation } from "../storage/types";
 
 interface AnnotationPopoverOptions {
@@ -49,10 +50,10 @@ export class AnnotationPopover {
     this.element.toggleClass("is-visible", true);
 
     const header = this.element.createDiv({ cls: "axl-popover-header" });
-    header.createSpan({ cls: "axl-popover-title", text: "Annotation" });
+    header.createSpan({ cls: "axl-popover-title", text: t("popover.title") });
     const close = header.createEl("button", {
       cls: "axl-icon-button",
-      attr: { type: "button", title: "Close annotation popover" },
+      attr: { type: "button", title: t("popover.closeTooltip") },
     });
     setIcon(close, "x");
     close.addEventListener("click", () => this.hide());
@@ -92,12 +93,12 @@ export class AnnotationPopover {
     });
 
     const meta = card.createDiv({ cls: "axl-popover-meta" });
-    meta.createSpan({ cls: "axl-color-chip", text: item.color, attr: { "data-axl-color": item.color } });
-    meta.createSpan({ text: item.kind === "comment" ? item.author ?? "Reader" : "highlight only" });
+    meta.createSpan({ cls: "axl-color-chip", text: getColorLabel(item.color), attr: { "data-axl-color": item.color } });
+    meta.createSpan({ text: item.kind === "comment" ? item.author ?? t("popover.fallbackAuthor") : t("popover.highlightOnly") });
 
     card.createDiv({ cls: "axl-popover-quote", text: item.quote });
     if (!item.content) {
-      card.createDiv({ cls: "axl-popover-empty", text: "No sticky note attached yet." });
+      card.createDiv({ cls: "axl-popover-empty", text: t("popover.emptyNote") });
       return;
     }
 
