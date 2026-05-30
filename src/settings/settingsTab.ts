@@ -8,6 +8,7 @@
 import { PluginSettingTab, Setting } from "obsidian";
 
 import type OverlayAnnotationsPlugin from "../../main";
+import { getColorLabel, t } from "../i18n/helpers";
 import { ANNOTATION_COLORS, AnnotationColor, SidebarSide } from "../storage/types";
 
 export class AnnotationSettingsTab extends PluginSettingTab {
@@ -18,13 +19,13 @@ export class AnnotationSettingsTab extends PluginSettingTab {
   display(): void {
     const { containerEl } = this;
     containerEl.empty();
-    containerEl.createEl("h2", { text: "Axl Light" });
+    containerEl.createEl("h2", { text: t("settings.heading") });
 
     new Setting(containerEl)
-      .setName("Default highlight color")
+      .setName(t("settings.defaultHighlightColor.name"))
       .addDropdown((dropdown) => {
         for (const color of ANNOTATION_COLORS) {
-          dropdown.addOption(color, color);
+          dropdown.addOption(color, getColorLabel(color));
         }
         dropdown.setValue(this.plugin.settings.defaultHighlightColor).onChange(async (value) => {
           this.plugin.settings.defaultHighlightColor = value as AnnotationColor;
@@ -33,7 +34,7 @@ export class AnnotationSettingsTab extends PluginSettingTab {
       });
 
     new Setting(containerEl)
-      .setName("Sticky note width")
+      .setName(t("settings.stickyNoteWidth.name"))
       .addSlider((slider) => {
         slider
           .setLimits(220, 420, 10)
@@ -47,11 +48,11 @@ export class AnnotationSettingsTab extends PluginSettingTab {
       });
 
     new Setting(containerEl)
-      .setName("Sticky note side")
-      .setDesc("Right is the intended reader layout; left is kept as an advanced preference.")
+      .setName(t("settings.stickyNoteSide.name"))
+      .setDesc(t("settings.stickyNoteSide.desc"))
       .addDropdown((dropdown) => {
-        dropdown.addOption("right", "Right");
-        dropdown.addOption("left", "Left");
+        dropdown.addOption("right", t("settings.stickyNoteSide.optionRight"));
+        dropdown.addOption("left", t("settings.stickyNoteSide.optionLeft"));
         dropdown.setValue(this.plugin.settings.stickySide).onChange(async (value) => {
           this.plugin.settings.stickySide = value as SidebarSide;
           await this.plugin.saveSettings();
@@ -60,8 +61,8 @@ export class AnnotationSettingsTab extends PluginSettingTab {
       });
 
     new Setting(containerEl)
-      .setName("Collapse sticky lane below width")
-      .setDesc("When the editor pane is narrower than this, notes open as popovers instead of a permanent lane.")
+      .setName(t("settings.collapseStickyLane.name"))
+      .setDesc(t("settings.collapseStickyLane.desc"))
       .addSlider((slider) => {
         slider
           .setLimits(640, 1200, 20)
@@ -75,7 +76,7 @@ export class AnnotationSettingsTab extends PluginSettingTab {
       });
 
     new Setting(containerEl)
-      .setName("Show leader lines")
+      .setName(t("settings.showLeaderLines.name"))
       .addToggle((toggle) => {
         toggle.setValue(this.plugin.settings.showLeaderLines).onChange(async (value) => {
           this.plugin.settings.showLeaderLines = value;
@@ -85,17 +86,17 @@ export class AnnotationSettingsTab extends PluginSettingTab {
       });
 
     new Setting(containerEl)
-      .setName("Default author")
+      .setName(t("settings.defaultAuthor.name"))
       .addText((text) => {
         text.setValue(this.plugin.settings.defaultAuthor).onChange(async (value) => {
-          this.plugin.settings.defaultAuthor = value.trim() || "Reader";
+          this.plugin.settings.defaultAuthor = value.trim() || t("settings.defaultAuthor.fallbackAuthor");
           await this.plugin.saveSettings();
         });
       });
 
     new Setting(containerEl)
-      .setName("Data backup frequency")
-      .setDesc("Minutes between future backup hooks. The sidecar files are still saved immediately.")
+      .setName(t("settings.dataBackupFrequency.name"))
+      .setDesc(t("settings.dataBackupFrequency.desc"))
       .addSlider((slider) => {
         slider
           .setLimits(5, 240, 5)
@@ -108,7 +109,7 @@ export class AnnotationSettingsTab extends PluginSettingTab {
       });
 
     new Setting(containerEl)
-      .setName("Migrate annotations on rename")
+      .setName(t("settings.migrateOnRename.name"))
       .addToggle((toggle) => {
         toggle.setValue(this.plugin.settings.migrateOnRename).onChange(async (value) => {
           this.plugin.settings.migrateOnRename = value;

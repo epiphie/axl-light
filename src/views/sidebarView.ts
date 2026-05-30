@@ -8,6 +8,7 @@
 import { ItemView, MarkdownRenderer, MarkdownView, Notice, setIcon, TFile, WorkspaceLeaf } from "obsidian";
 
 import type OverlayAnnotationsPlugin from "../../main";
+import { getColorLabel, getNoteTitleLabel, t } from "../i18n/helpers";
 import {
   ANNOTATION_COLORS,
   AnnotationColor,
@@ -101,7 +102,7 @@ export class AnnotationSidebarView extends ItemView {
   }
 
   getDisplayText(): string {
-    return "Axl Light";
+    return t("sidebar.viewName");
   }
 
   getIcon(): string {
@@ -123,7 +124,7 @@ export class AnnotationSidebarView extends ItemView {
     this.renderControls(container);
 
     if (!file) {
-      container.createDiv({ cls: "axl-empty", text: "Open a Markdown or PDF file to inspect annotations." });
+      container.createDiv({ cls: "axl-empty", text: t("sidebar.emptyState") });
       return;
     }
 
@@ -141,11 +142,11 @@ export class AnnotationSidebarView extends ItemView {
     const noteCount =
       document.comments.filter((comment) => !comment.orphaned).length +
       document.pdfComments.filter((comment) => !comment.orphaned).length;
-    container.createDiv({ cls: "axl-ov-count", text: `${highlightCount} highlights · ${noteCount} notes` });
+    container.createDiv({ cls: "axl-ov-count", text: t("sidebar.countTemplate", { highlightCount: String(highlightCount), noteCount: String(noteCount) }) });
 
     const list = container.createDiv({ cls: "axl-ov-list" });
     if (!cards.length) {
-      list.createDiv({ cls: "axl-empty", text: "No matching annotations." });
+      list.createDiv({ cls: "axl-empty", text: t("sidebar.noMatches") });
     } else {
       for (const card of cards) {
         this.renderCard(list, file, card);
@@ -322,10 +323,10 @@ export class AnnotationSidebarView extends ItemView {
 
   private renderHeader(container: Element): void {
     const header = container.createDiv({ cls: "axl-ov-head" });
-    header.createSpan({ cls: "axl-ov-title", text: "Axl Light" });
+    header.createSpan({ cls: "axl-ov-title", text: t("sidebar.header.title") });
     const close = header.createEl("button", {
       cls: "axl-icon-btn axl-ov-close",
-      attr: { type: "button", title: "Close panel", "aria-label": "Close Axl Light panel" },
+      attr: { type: "button", title: t("sidebar.header.closeTitle"), "aria-label": t("sidebar.header.closeAriaLabel") },
     });
     setIcon(close, "x");
     close.addEventListener("click", () => {
@@ -337,21 +338,21 @@ export class AnnotationSidebarView extends ItemView {
     const searchRow = container.createDiv({ cls: "axl-ov-search-row" });
     const search = searchRow.createEl("input", {
       cls: "axl-ov-search",
-      attr: { type: "search", placeholder: "Search annotations..." },
+      attr: { type: "search", placeholder: t("sidebar.search.placeholder") },
     });
     search.value = this.query;
     search.addEventListener("input", async () => {
       this.query = search.value;
       await this.render();
     });
-    const filterButton = searchRow.createEl("button", { cls: "axl-icon-btn", attr: { type: "button", title: "Filter" } });
+    const filterButton = searchRow.createEl("button", { cls: "axl-icon-btn", attr: { type: "button", title: t("sidebar.search.filterTitle") } });
     setIcon(filterButton, "filter");
 
     const filterRow = container.createDiv({ cls: "axl-ov-filter-row" });
     const color = filterRow.createEl("select", { cls: "axl-filter-select" });
-    color.createEl("option", { text: "All colors", value: "all" });
+    color.createEl("option", { text: t("sidebar.filter.allColors"), value: "all" });
     for (const item of ANNOTATION_COLORS) {
-      color.createEl("option", { text: item, value: item });
+      color.createEl("option", { text: getColorLabel(item), value: item });
     }
     color.value = this.color;
     color.addEventListener("change", async () => {
@@ -360,9 +361,9 @@ export class AnnotationSidebarView extends ItemView {
     });
 
     const type = filterRow.createEl("select", { cls: "axl-filter-select" });
-    type.createEl("option", { text: "All types", value: "all" });
-    type.createEl("option", { text: "highlight", value: "highlight" });
-    type.createEl("option", { text: "note", value: "note" });
+    type.createEl("option", { text: t("sidebar.filter.allTypes"), value: "all" });
+    type.createEl("option", { text: t("sidebar.filter.typeHighlight"), value: "highlight" });
+    type.createEl("option", { text: t("sidebar.filter.typeNote"), value: "note" });
     type.value = this.type;
     type.addEventListener("change", async () => {
       this.type = type.value as TypeFilter;
@@ -370,8 +371,13 @@ export class AnnotationSidebarView extends ItemView {
     });
 
     const sort = filterRow.createEl("select", { cls: "axl-filter-select" });
-    for (const item of ["document", "newest", "oldest"] as const) {
-      sort.createEl("option", { text: item, value: item });
+    const sortOptions: { value: string; label: string }[] = [
+      { value: "document", label: t("sidebar.sort.document") },
+      { value: "newest", label: t("sidebar.sort.newest") },
+      { value: "oldest", label: t("sidebar.sort.oldest") },
+    ];
+    for (const item of sortOptions) {
+      sort.createEl("option", { text: item.label, value: item.value });
     }
     sort.value = this.sort;
     sort.addEventListener("change", async () => {
@@ -388,13 +394,13 @@ export class AnnotationSidebarView extends ItemView {
     card.toggleClass("is-orphaned", !!cardData.orphaned);
 
     const head = card.createDiv({ cls: "axl-ov-card-head" });
-    head.createSpan({ cls: `axl-ov-label axl-label--${cardData.color}`, text: cardData.color });
+    head.createSpan({ cls: `axl-ov-label axl-label--${cardData.color}`, text: getColorLabel(cardData.color) });
     head.createSpan({ cls: "axl-ov-meta", text: cardData.mode });
     head.createSpan({ cls: "axl-ov-dot", text: "·" });
     const title = cardData.note?.title ?? "";
     const type = head.createSpan({
       cls: "axl-ov-type",
-      text: title ? getTitleLabel(title) : cardData.kind,
+      text: title ? getNoteTitleLabel(title) : cardData.kind,
     });
     if (title) {
       type.dataset.title = title;
@@ -414,20 +420,20 @@ export class AnnotationSidebarView extends ItemView {
 
     const source = card.createDiv({ cls: "axl-ov-source" });
     source.createSpan({ cls: "axl-ov-file", text: file.name });
-    source.createSpan({ cls: "axl-ov-mode", text: cardData.pageNumber ? `p.${cardData.pageNumber}` : "Markdown" });
+    source.createSpan({ cls: "axl-ov-mode", text: cardData.pageNumber ? t("sidebar.card.pdfPage", { page: String(cardData.pageNumber) }) : t("sidebar.card.modeMarkdown") });
 
     const actions = card.createDiv({ cls: "axl-ov-actions" });
     if (cardData.note) {
       const edit = actions.createEl("button", {
         cls: "axl-ov-btn axl-ov-btn--icon",
-        attr: { type: "button", title: "Edit note", "data-action": "edit-note" },
+        attr: { type: "button", title: t("sidebar.card.editNoteTitle"), "data-action": "edit-note" },
       });
       setIcon(edit, "pencil");
       edit.addEventListener("click", () => this.openInlineEditor(card, file, cardData, cardData.content));
     } else if (cardData.highlight) {
       const addNote = actions.createEl("button", {
         cls: "axl-ov-btn",
-        text: "Add note",
+        text: t("sidebar.card.addNote"),
         attr: { type: "button", "data-action": "add-note" },
       });
       addNote.addEventListener("click", () => {
@@ -438,30 +444,30 @@ export class AnnotationSidebarView extends ItemView {
 
     const jump = actions.createEl("button", {
       cls: "axl-ov-btn",
-      text: "Jump",
+      text: t("sidebar.card.jump"),
       attr: { type: "button", "data-action": "jump" },
     });
     jump.addEventListener("click", () => this.jumpTo(file, cardData.startOffset, cardData.pageNumber));
 
     const remove = actions.createEl("button", {
       cls: "axl-ov-btn axl-ov-btn--danger",
-      text: "Delete",
+      text: t("sidebar.card.delete"),
       attr: { type: "button", "data-action": "delete" },
     });
     remove.addEventListener("click", async () => {
       await this.deleteCard(file, cardData);
-      new Notice("Annotation deleted");
+      new Notice(t("sidebar.card.annotationDeleted"));
       await this.plugin.refreshAnnotations();
     });
 
     const edit = card.createDiv({ cls: "axl-ov-edit hidden" });
     const textarea = edit.createEl("textarea", {
       cls: "axl-ov-textarea",
-      attr: { placeholder: "写下你的想法..." },
+      attr: { placeholder: t("sidebar.inlineEditor.placeholder") },
     });
     const editActions = edit.createDiv({ cls: "axl-ov-edit-actions" });
-    editActions.createEl("button", { cls: "axl-ov-save", text: "保存", attr: { type: "button" } });
-    editActions.createEl("button", { cls: "axl-ov-cancel", text: "取消", attr: { type: "button" } });
+    editActions.createEl("button", { cls: "axl-ov-save", text: t("sidebar.inlineEditor.save"), attr: { type: "button" } });
+    editActions.createEl("button", { cls: "axl-ov-cancel", text: t("sidebar.inlineEditor.cancel"), attr: { type: "button" } });
   }
 
   private cardAttributes(card: SidebarCard): Record<string, string> {
@@ -527,14 +533,14 @@ export class AnnotationSidebarView extends ItemView {
 
         const button = document.createElement("span");
         button.className = "axl-ov-expand-btn";
-        button.textContent = "Show more";
+        button.textContent = t("sidebar.card.showMore");
         button.tabIndex = 0;
         button.setAttribute("role", "button");
         contentEl.insertAdjacentElement("afterend", button);
         const toggle = (): void => {
           const expanded = contentEl.hasClass("expanded");
           contentEl.toggleClass("expanded", !expanded);
-          button.setText(expanded ? "Show more" : "Show less");
+          button.setText(expanded ? t("sidebar.card.showMore") : t("sidebar.card.showLess"));
         };
         button.addEventListener("click", toggle);
         button.addEventListener("keydown", (event) => {
@@ -648,16 +654,16 @@ export class AnnotationSidebarView extends ItemView {
 
   private renderExportFooter(container: Element, file: TFile | null): void {
     const footer = container.createDiv({ cls: "axl-ov-foot" });
-    const exportButton = footer.createEl("button", { cls: "axl-export-btn", text: "↑ Export annotations", attr: { type: "button" } });
+    const exportButton = footer.createEl("button", { cls: "axl-export-btn", text: t("sidebar.export.buttonLabel"), attr: { type: "button" } });
     exportButton.disabled = !file;
     exportButton.addEventListener("click", async () => {
       if (!file) {
         return;
       }
       const exported = await this.plugin.store.exportNotes(file);
-      new Notice(`Exported notes to ${exported.path}`);
+      new Notice(t("sidebar.export.exportedNotice", { path: exported.path }));
     });
-    footer.createDiv({ cls: "axl-ov-export-note", text: "Export as Markdown summary" });
+    footer.createDiv({ cls: "axl-ov-export-note", text: t("sidebar.export.footnote") });
   }
 
   private async jumpTo(file: TFile, offset: number, pageNumber: number | null): Promise<void> {
@@ -690,15 +696,6 @@ export class AnnotationSidebarView extends ItemView {
 
 function formatTime(value: string): string {
   return new Date(value).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-}
-
-function getTitleLabel(title: string): string {
-  const labels: Record<string, string> = {
-    Insight: "💡 Insight",
-    Question: "❓ Question",
-    Reminder: "🔔 Reminder",
-  };
-  return labels[title] ?? title;
 }
 
 function isCodeAnchor(anchor: HighlightAnnotation["anchor"] | PdfHighlightAnnotation["anchor"]): boolean {

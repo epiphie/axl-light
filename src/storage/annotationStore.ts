@@ -7,6 +7,7 @@
 
 import { App, normalizePath, TFile } from "obsidian";
 
+import { getColorLabel, t } from "../i18n/helpers";
 import {
   AnnotationIndex,
   AnnotationIndexEntry,
@@ -210,28 +211,38 @@ export class AnnotationStore {
     const document = await this.getDocument(file);
     const baseName = file.basename || file.name.replace(/\.md$/i, "");
     const targetPath = normalizePath(`${file.parent?.path ?? ""}/${baseName}-notes.md`);
+    const now = new Date().toISOString();
     const lines = [
-      `# Notes for ${file.path}`,
+      `# ${t("export.notesHeading", { path: file.path })}`,
       "",
-      `Exported: ${new Date().toISOString()}`,
+      `${t("export.exportedLabel", { date: now })}`,
       "",
-      "## Highlights",
+      `## ${t("export.highlightsHeading")}`,
       "",
       ...document.highlights.map((highlight) => {
-        return `- ==${highlight.anchor.selectedText}== (${highlight.color}, ${highlight.createdAt})`;
+        return t("export.highlightItem", {
+          text: highlight.anchor.selectedText,
+          color: getColorLabel(highlight.color),
+          date: highlight.createdAt,
+        });
       }),
       ...document.pdfHighlights.map((highlight) => {
-        return `- ==${highlight.anchor.selectedText}== (PDF page ${highlight.anchor.pageNumber}, ${highlight.color}, ${highlight.createdAt})`;
+        return t("export.pdfPageItem", {
+          text: highlight.anchor.selectedText,
+          page: String(highlight.anchor.pageNumber),
+          color: getColorLabel(highlight.color),
+          date: highlight.createdAt,
+        });
       }),
       "",
-      "## Sticky Notes",
+      `## ${t("export.stickyNotesHeading")}`,
       "",
       ...document.comments.map((comment) => {
         return [
           `### ${comment.anchor.selectedText}`,
           "",
-          `Color: ${comment.color}`,
-          `Created: ${comment.createdAt}`,
+          `${t("export.colorLabel", { color: getColorLabel(comment.color) })}`,
+          `${t("export.createdLabel", { date: comment.createdAt })}`,
           "",
           comment.content,
           "",
@@ -241,8 +252,8 @@ export class AnnotationStore {
         return [
           `### PDF page ${comment.anchor.pageNumber}: ${comment.anchor.selectedText}`,
           "",
-          `Color: ${comment.color}`,
-          `Created: ${comment.createdAt}`,
+          `${t("export.colorLabel", { color: getColorLabel(comment.color) })}`,
+          `${t("export.createdLabel", { date: comment.createdAt })}`,
           "",
           comment.content,
           "",
