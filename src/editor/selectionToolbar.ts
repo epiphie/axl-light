@@ -6,6 +6,7 @@
  */
 
 import { ANNOTATION_COLORS, AnnotationColor } from "../storage/types";
+import { getColorLabel, t } from "../i18n/helpers";
 
 interface SelectionToolbarOptions {
   onHighlight: (color: AnnotationColor) => void;
@@ -69,7 +70,7 @@ export class SelectionToolbar {
         cls: `axl-toolbar-color axl-toolbar-color--${color}`,
         attr: {
           type: "button",
-          "aria-label": `Highlight ${color}`,
+          "aria-label": t("toolbar.highlightAriaLabel", { color: getColorLabel(color) }),
           "data-axl-color": color,
         },
       });
@@ -78,13 +79,13 @@ export class SelectionToolbar {
 
     this.element.createDiv({ cls: "axl-toolbar-sep" });
 
-    const commentButton = this.iconButton("Add sticky note", NOTE_ICON);
+    const commentButton = this.iconButton(t("toolbar.addStickyNote"), NOTE_ICON);
     commentButton.addEventListener("click", () => this.options.onComment());
 
-    const copyButton = this.iconButton("Copy", COPY_ICON);
+    const copyButton = this.iconButton(t("toolbar.copy"), COPY_ICON);
     copyButton.addEventListener("click", () => this.options.onCopy());
 
-    const sidebarButton = this.iconButton("Open overview", OVERVIEW_ICON);
+    const sidebarButton = this.iconButton(t("toolbar.openOverview"), OVERVIEW_ICON);
     sidebarButton.addEventListener("click", () => this.options.onOpenSidebar());
   }
 

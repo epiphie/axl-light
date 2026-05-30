@@ -80,6 +80,7 @@
 
 .axl-icon-btn,
 .axl-icon-button {
+  --icon-size: 18px;
   width: 28px;
   height: 28px;
   border: none;
@@ -97,6 +98,15 @@
 .axl-icon-button:hover {
   background: var(--background-modifier-hover);
   color: var(--text-normal);
+}
+
+.axl-icon-btn svg,
+.axl-icon-button svg {
+  width: 18px !important;
+  height: 18px !important;
+  min-width: 18px !important;
+  min-height: 18px !important;
+  flex-shrink: 0;
 }
 
 .axl-empty {

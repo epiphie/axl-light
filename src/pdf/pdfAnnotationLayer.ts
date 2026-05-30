@@ -7,6 +7,7 @@
 
 import { App, Component, MarkdownRenderer, Notice, setIcon, TFile } from "obsidian";
 
+import { t } from "../i18n/helpers";
 import {
   AnnotationColor,
   AnnotationPluginSettings,
@@ -69,7 +70,7 @@ export class PdfAnnotationLayer {
   async createHighlight(color: AnnotationColor): Promise<boolean> {
     const snapshot = this.resolveSelection();
     if (!snapshot) {
-      new Notice("Select text in a PDF first.");
+      new Notice(t("pdf.selectTextFirst"));
       return true;
     }
 
@@ -87,7 +88,7 @@ export class PdfAnnotationLayer {
   async createComment(color: AnnotationColor, content: string, author: string, title = ""): Promise<boolean> {
     const snapshot = this.resolveSelection();
     if (!snapshot) {
-      new Notice("Select text in a PDF first.");
+      new Notice(t("pdf.selectTextFirst"));
       return true;
     }
 
@@ -286,8 +287,8 @@ export class PdfAnnotationLayer {
     this.hidePopover();
     this.popover = document.body.createDiv({ cls: "axl-pdf-popover axl-annotation-popover is-visible" });
     const header = this.popover.createDiv({ cls: "axl-popover-header" });
-    header.createSpan({ cls: "axl-popover-title", text: `PDF page ${annotation.anchor.pageNumber}` });
-    const close = header.createEl("button", { cls: "axl-icon-button", attr: { type: "button", title: "Close" } });
+    header.createSpan({ cls: "axl-popover-title", text: t("pdf.pageTitle", { page: String(annotation.anchor.pageNumber) }) });
+    const close = header.createEl("button", { cls: "axl-icon-button", attr: { type: "button", title: t("pdf.close") } });
     setIcon(close, "x");
     close.addEventListener("click", () => this.hidePopover());
 
