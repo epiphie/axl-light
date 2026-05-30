@@ -300,6 +300,10 @@ function wrapRange(segments: TextSegment[], range: RenderedRange, color: Annotat
     }
 
     const selected = splitTextRange(segment.node, localStart, localEnd);
+    if (!selected.textContent?.trim()) {
+      continue;
+    }
+
     const mark = document.createElement("mark");
     mark.className = `axl-reading-highlight axl-highlight axl-highlight--${color}`;
     mark.dataset.axlColor = color;
